@@ -1,0 +1,199 @@
+---
+title: "Análise de Gráfico com Dois Eixos Y em R"
+author: "Evaldo Silva"
+date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-fold: true
+    theme: yeti
+    number-sections: true
+    highlight-style: tango
+mainfont: "Palatino" # Helvetica, Arial, Latin Modern Roman, Times New Roman, Georgia, Cambria, Palatino, DejaVu Serif, Liberation Serif, CMU Serif,
+editor: visual
+lang: pt-BR
+bibliography: references.bib
+csl: food-chemistry.csl
+editor_options:
+  chunk_output_type: console
+---
+
+```{r}
+#| include: false # Indica que tanto o código quanto a saída deste chunk não aparecerão
+#| warning: false
+#| message: false
+
+
+# Ajustes de opçoes globais para todo os chunks
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  out.width = "70%",
+  fig.align = "center",
+  dev = "png",
+  comment = NA,
+  fig.pos = "H", # Previne a figura de flutuar
+  fig.path = here::here("plots/") # Local para salvar os plots
+)
+
+# Carregamento das bibliotecas essenciais
+library(tidyverse)
+library(readxl)
+library(here)
+
+# Organização de diretórios
+dirs <- c("plots", "images", "dados", "codigos")
+purrr::walk(dirs, ~ dir.create(here::here(.x), showWarnings = FALSE))
+
+# Carregamento de funções personalizadas
+source(here::here("codigos", "funcoes_auxiliares.R"))
+```
+
+# Introdução
+
+Neste documento, exploraremos como criar um gráfico com dois eixos y de diferentes escalas utilizando o pacote `ggplot2` em R. Este modelo pode ser utilizado para visualizar duas séries de dados distintas no mesmo gráfico, facilitando a comparação e análise.
+
+# Preparação do Ambiente
+
+Antes de iniciar, certifique-se de que os pacotes necessários estão instalados e carregados.
+
+```{r setup, include=FALSE}
+# Instalando pacotes necessários
+if (!require(ggplot2)) install.packages("ggplot2")
+if (!require(knitr)) install.packages("knitr")
+if (!require(kableExtra)) install.packages("kableExtra")
+
+# Carregando pacotes
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+```
+
+# Gerando os Dados
+
+## Definindo a Semente para Reprodutibilidade
+
+Utilizamos `set.seed(123)` para garantir que os resultados possam ser reproduzidos.
+
+```{r seed}
+set.seed(123)
+```
+
+## Criando Variáveis
+
+Geramos dados fictícios para `X`, `Y1` e `Y2`.
+
+```{r data-generation}
+X <- seq(1, 10, by = 1)
+Y1 <- X + rnorm(length(X), mean = 0, sd = 0.5)
+Y2 <- X^2 + rnorm(length(X), mean = 0, sd = 2)
+
+# Criando o data frame
+dados <- data.frame(X, Y1, Y2)
+```
+
+## Visualizando os Dados
+
+Apresentamos os primeiros registros dos dados gerados.
+
+```{r data-table}
+kable(head(dados), caption = "Tabela 1: Primeiros registros dos dados") %>%
+  kable_styling(full_width = FALSE)
+```
+
+# Preparando os Dados para o Gráfico
+
+## Calculando Parâmetros de Escala
+
+Determinamos os valores mínimos e máximos de `Y1` e `Y2` para calcular o fator de escala e o deslocamento necessários.
+
+```{r scale-parameters}
+minY1 <- min(dados$Y1)
+maxY1 <- max(dados$Y1)
+minY2 <- min(dados$Y2)
+maxY2 <- max(dados$Y2)
+
+# Calculando fator de escala e deslocamento
+scale_factor <- (maxY1 - minY1) / (maxY2 - minY2)
+shift <- minY1 - minY2 * scale_factor
+```
+
+## Aplicando Transformação em Y2
+
+Transformamos `Y2` para alinhá-lo com a escala de `Y1`.
+
+```{r data-transformation}
+dados$Y2_scaled <- dados$Y2 * scale_factor + shift
+```
+
+# Criando o Gráfico com Dois Eixos Y
+
+Utilizamos o `ggplot2` para criar o gráfico, incorporando os ajustes necessários para os eixos y primário e secundário.
+
+```{r dual-axis-plot, fig.cap="Figura 1: Gráfico com Dois Eixos Y"}
+#| warning: false
+p <- ggplot(dados, aes(x = X)) +
+  # Gráfico de Y1
+  geom_line(aes(y = Y1, color = "Y1"), size = 1) +
+  # Gráfico de Y2 escalado
+  geom_line(aes(y = Y2_scaled, color = "Y2"), size = 1) +
+  
+  # Configurando os eixos y
+  scale_y_continuous(
+    name = "Y1",
+    limits = c(minY1, maxY1),
+    sec.axis = sec_axis(
+      transform = ~ (. - shift) / scale_factor,
+      name = "Y2"
+    )
+  ) +
+  
+  # Ajustando cores e legenda
+  scale_color_manual(
+    name = "Legenda",
+    values = c("Y1" = "red", "Y2" = "blue")
+  ) +
+  
+  # Personalizando o tema
+  labs(x = "X", y = "Y1") +
+  theme_minimal() +
+  theme(
+    axis.title.y.left = element_text(color = "red"),
+    axis.title.y.right = element_text(color = "blue"),
+    legend.position = c(0.82, 0.30),
+    legend.justification = c(0,1)
+  )
+
+# Exibindo o gráfico
+print(p)
+```
+
+# Explicação Detalhada
+
+## Gerando os Dados
+
+Criamos duas séries de dados:
+
+-   **Y1**: Uma relação linear com `X` adicionada de um ruído normal.
+-   **Y2**: Uma relação quadrática com `X` adicionada de um ruído normal.
+
+## Ajuste de Escala
+
+Para plotar ambas as séries no mesmo gráfico, escalamos `Y2` para que corresponda à escala de `Y1`. Isso é feito através de uma transformação linear utilizando o fator de escala e o deslocamento calculados.
+
+## Construção do Gráfico
+
+-   **Linhas**: Utilizamos `geom_line` para plotar `Y1` e `Y2_scaled`.
+-   **Eixos Y**: `scale_y_continuous` define o eixo y primário e `sec_axis` configura o eixo y secundário com a transformação inversa.
+-   **Cores e Legendas**: `scale_color_manual` personaliza as cores das linhas e da legenda.
+-   **Tema**: `theme_minimal` é utilizado para um visual clean, e ajustes adicionais são feitos nos títulos dos eixos e na posição da legenda.
+
+# Conclusão
+
+Este modelo demonstra como visualizar duas séries de dados com escalas diferentes em um único gráfico, facilitando comparações e análises. A abordagem pode ser adaptada para diferentes conjuntos de dados e necessidades específicas.
+
+# Referências
+
+-   **Pacote ggplot2**: [Documentação oficial](https://ggplot2.tidyverse.org/)
+-   **R Markdown**: [Guia de referência](https://rmarkdown.rstudio.com/)
