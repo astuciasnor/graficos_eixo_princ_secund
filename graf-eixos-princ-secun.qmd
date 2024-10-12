@@ -34,8 +34,7 @@ knitr::opts_chunk$set(
   dev = "png",
   comment = NA,
   fig.pos = "H", # Previne a figura de flutuar
-  fig.path = here::here("plots/") # Local para salvar os plots
-)
+  fig.path = "plots/") # Local para salvar os plots
 
 # Carregamento das bibliotecas essenciais
 library(tidyverse)
