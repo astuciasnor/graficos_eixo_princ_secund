@@ -2,7 +2,7 @@
 title: "Análise de Gráfico com Dois Eixos Y em R"
 author: "Evaldo Silva"
 abstract: Este documento apresenta um modelo para a criação de gráficos com dois eixos y de escalas diferentes utilizando o pacote ggplot2 em R. A metodologia abrange a geração de dados fictícios, o cálculo de parâmetros de escala para alinhar séries distintas e a aplicação das transformações necessárias. O gráfico resultante permite a visualização simultânea de ambas as séries, facilitando comparações diretas. Além disso, o modelo inclui a formatação de tabelas e a elaboração de um relatório profissional em Quarto com saída em HTML, incluindo índice, numeração de figuras e cabeçalhos. Esta ferramenta é eficaz para analistas que precisam comparar variáveis com escalas diferentes de forma clara e concisa.
-date: "`r format(Sys.Date(), '%d de %B de %Y')`"
+date: "`r format(Sys.time(), '%m, %d, %Y')`"
 format:
   html:
     toc: true
